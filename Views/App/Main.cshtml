@@ -1,0 +1,59 @@
+﻿@{
+    ViewBag.Title = "Main";
+
+    var userName = string.Empty;
+    var position = string.Empty;
+    var roles = string.Empty;
+    
+    if(Request.IsAuthenticated)
+    {
+        var rolesDisplayeList = new List<string>(Roles.GetRolesForUser());
+        
+        var user = Membership.GetUser() as PJ_CWN019.TM.PBM.Web.Models.Providers.PbmMembershipUser;
+        if(user != null)
+        {
+            userName = user.UserName;
+            position = user.PositionName;
+            roles = string.Join(" / ", rolesDisplayeList.ToArray());
+        }else
+        {
+            WebSecurity.Logout();
+        }
+    }
+}
+
+@section scripts{
+    <script>
+        document.logoFilePath = '@Url.Content("~/Content/images/pbm_logo.jpg")';
+        document.appFolderPath = '@Url.Content("~/app")';
+        document.scriptsFolderPath = '@Url.Content("~/Scripts")';
+        document.appName = 'PBMTM';
+
+        document.urlAppRoot = '@Url.Content("~/")';
+        document.urlAppApi = '@Url.Content("~/App")';
+        document.urlEmployeeApi = '@Url.Content("~/Employee")';
+        document.urlOrganizationApi = '@Url.Content("~/Organization")';
+        document.urlProjectApi = '@Url.Content("~/Project")';
+        document.urlTimesheetApi = '@Url.Content("~/Timesheet")';
+        document.urlReportingApi = '@Url.Content("~/Reporting")';
+        document.urlCustomerApi = '@Url.Content("~/Customer")';
+        document.urlProjectActivitiesApi = '@Url.Content("~/ProjectActivities")';
+
+        document.firstDayOfWeek = '@ViewBag.firstDayOfWeek';
+        document.firstDayOfMonth = '@ViewBag.firstDayOfMonth';
+        document.toDay = '@ViewBag.toDay';
+
+        LoginToken = (function () {
+            return {
+                isAuthenticated: ('@Request.IsAuthenticated' === 'True') ? true : false,
+                rolesForUser: [],
+                userName: '@userName',
+                position: '@position',
+                roles: '@roles'
+            };
+        })();
+
+    </script>
+
+    @Scripts.Render("~/bundles/app")
+}
