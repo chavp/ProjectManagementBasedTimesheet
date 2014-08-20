@@ -42,12 +42,15 @@ Ext.onReady(function () {
 
     Ext.define("Ext.locale.th.picker.Month", {
         override: "Ext.picker.Month",
+
         okText: "&#160;ตกลง&#160;",
+
         cancelText: "ยกเลิก"
     });
 
     Ext.define("Ext.locale.th.window.MessageBox", {
         override: "Ext.window.MessageBox",
+
         buttonText: {
             ok: "ตกลง",
             cancel: "ยกเลิก",
@@ -56,16 +59,17 @@ Ext.onReady(function () {
         }
     });
 
-    Ext.override(Ext.Date, {
+    Ext.define("Ext.locale.th.Date", {
+        override: "Ext.Date",
 
         monthNames: _monthNames,
+
+        dayNames: _dayNames,
 
         getShortMonthName: function (month) {
             var mounthName = ThaiDatepickerText.mounthNames[month];
             return mounthName.shortName;
         },
-
-        dayNames: _dayNames,
 
         getShortDayName: function (day) {
             var dayName = ThaiDatepickerText.dayNames[day];
@@ -74,8 +78,10 @@ Ext.onReady(function () {
 
     });
 
-    Ext.override(Ext.picker.Month, {
-        updateBody: function(){
+    Ext.define('Ext.locale.th.picker.Month', {
+        override: "Ext.picker.Month",
+
+        updateBody: function () {
             var me = this,
                 years = me.years,
                 months = me.months,
@@ -92,7 +98,7 @@ Ext.onReady(function () {
                 months.removeCls(cls);
 
                 yearItems = years.elements;
-                yLen      = yearItems.length;
+                yLen = yearItems.length;
 
                 for (y = 0; y < yLen; y++) {
                     el = Ext.fly(yearItems[y]);
@@ -118,7 +124,9 @@ Ext.onReady(function () {
         }
     });
 
-    Ext.override(Ext.picker.Date, {
+    Ext.define('Ext.locale.th.picker.Date', {
+        override: "Ext.picker.Date",
+
         todayText: "วันนี้",
         minText: "This date is before the minimum date",
         maxText: "This date is after the maximum date",
@@ -150,7 +158,7 @@ Ext.onReady(function () {
         }
     });
 
-    Ext.form.field.Date.prototype.rawToRealRawValue = function (rawValue) {
+    var _rawToRealRawValue = function (rawValue) {
         if (rawValue) {
             var present_st = rawValue.split('/');
             var year = parseInt(present_st[2]);
@@ -161,7 +169,9 @@ Ext.onReady(function () {
         return rawValue;
     };
 
-    Ext.override(Ext.form.field.Date, {
+    Ext.define('Ext.locale.th.form.field.Date', {
+        override: "Ext.form.field.Date",
+
         getErrors: function (value) {
             var me = this,
                 format = Ext.String.format,
@@ -178,12 +188,13 @@ Ext.onReady(function () {
                 day,
                 time;
 
+            // ********************************************
             errors = [];
-            var realRawValue = me.rawToRealRawValue(me.getRawValue());
-            value = me.rawToRealRawValue(value);
-
+            var realRawValue = _rawToRealRawValue(me.getRawValue());
+            value = _rawToRealRawValue(value);
             value = me.formatDate(value || me.processRawValue(realRawValue));
-            
+            // ********************************************
+
             if (value === null || value.length < 1) { // if it's blank and textfield didn't flag it then it's valid
                 return errors;
             }
@@ -251,5 +262,3 @@ Ext.onReady(function () {
         }
     });
 });
-
-//http://www.imooh.com/jquery-thai-calendars-datepicker-plugin
