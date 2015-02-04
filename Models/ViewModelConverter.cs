@@ -41,6 +41,8 @@ namespace PJ_CWN019.TM.PBM.Web.Models
 
                 Cost = totalCost,
                 RoleCost = roleCost,
+
+                IsOT = timesheet.IsOT,
             };
 
         }

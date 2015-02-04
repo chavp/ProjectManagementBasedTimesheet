@@ -41,6 +41,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                                        TotalPerson = totalPerson
                                    });
 
+                count = departments.Count();
+
                 departments.ForEach(dept =>
                 {
                     //var prjRole = (from pr in session.Query<ProjectRole>()
@@ -91,6 +93,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                               let totalPerson = (from u in session.Query<User>() where u.Position == p select u).Count()
                               select new { Position = p, TotalPerson = totalPerson }).ToList();
 
+                count = poList.Count();
+
                 poList.ForEach(po =>
                 {
 
@@ -129,6 +133,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
         {
             var viewList = new List<DepartmentTreeView>();
 
+            int count = 0;
+
             using (var session = _sessionFactory.OpenSession())
             {
                 var bu5Div = (from div in session.Query<Division>()
@@ -138,6 +144,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 var depts = (from dept in session.Query<Department>()
                              where dept.Division == bu5Div
                             select dept).ToList();
+
+                count = depts.Count();
 
                 foreach (var dept in depts)
                 {
@@ -152,38 +160,12 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
 
                     viewList.Add(newDeptView);
 
-                    //foreach (var po in dept.Positions)
-                    //{
-                    //    string id = string.Format("{0}-{1}", dept.ID, po.ID);
-
-                    //    var prjRole = (from pr in session.Query<ProjectRole>()
-                    //                   where pr.NameTH == po.NameTH
-                    //                   select pr).FirstOrDefault();
-
-                    //    decimal cost = 0;
-                    //    if (prjRole != null)
-                    //    {
-                    //        cost = prjRole.ProjectRoleRates
-                    //            .OrderByDescending(prr => prr.EffectiveStart)
-                    //            .Select(prr => prr.Cost)
-                    //            .FirstOrDefault();
-                    //    }
-
-                    //    newDeptView.children.Add(new DepartmentTreeView
-                    //    {
-                    //        ID = id,
-                    //        DepartmentID = dept.ID,
-                    //        leaf = true,
-                    //        Position = po.NameTH,
-                    //        PositionID = po.ID,
-                    //        ProjectRoleRateCost = cost,
-                    //    });
-                    //}
                 }
                 return Json(new
                 {
                     children = viewList,
                     text = ".",
+                    total = count,
                     success = true,
                 }, JsonRequestBehavior.AllowGet);
             }

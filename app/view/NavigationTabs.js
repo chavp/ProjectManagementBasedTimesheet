@@ -8,12 +8,16 @@
 
         Ext.apply(self, {
             items: [{
+                id: 'main-tabs',
                 xtype: 'tabpanel',
                 plain: false,
                 frame: false,
                 bodyPadding: 15,
                 autoScroll: true,
-                reference: 'navigation'
+                reference: 'navigation',
+                listeners: {
+                    tabchange: CommandActionBuilder.onTabChange
+                }
             }]
         });
 

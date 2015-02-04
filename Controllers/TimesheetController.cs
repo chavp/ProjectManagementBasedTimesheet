@@ -258,7 +258,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     IsOT = model.IsOT,
                 };
 
-                project.TimeSheets.Add(newTimesheet);
+                session.Save(newTimesheet);
+                //project.TimeSheets.Add(newTimesheet);
 
                 transaction.Commit();
                 return Json(new

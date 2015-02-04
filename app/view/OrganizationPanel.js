@@ -19,7 +19,7 @@
     },
 
     activeTab: 0,
-
+    
     initComponent: function () {
         var self = this;
 
@@ -27,27 +27,29 @@
 
         //});
 
-        self.items = [{
-            title: '<i class="glyphicon glyphicon-th"></i> ' + TextLabel.departmentLabel,
+        Ext.apply(self, {
             items: [{
-                xtype: 'departmentPanel',
-                departmentStore: self.departmentStore
+                title: '<i class="glyphicon glyphicon-th"></i> ' + TextLabel.departmentLabel,
+                items: [{
+                    xtype: 'departmentPanel',
+                    departmentStore: self.departmentStore
+                }]
+            }, {
+                title: '<i class="glyphicon glyphicon-hand-right"></i> ' + TextLabel.positionLabel,
+                items: [{
+                    xtype: 'positionPanel',
+                    positionStore: self.positionStore
+                }]
+            }, {
+                title: '<i class="glyphicon glyphicon-user"></i> ' + TextLabel.empLabel,
+                items: [{
+                    xtype: 'employeePanel',
+                    employeeStore: self.employeeStore,
+                    departmentStore: self.departmentStore,
+                    positionStore: self.positionStore
+                }]
             }]
-        }, {
-            title: '<i class="glyphicon glyphicon-hand-right"></i> ' + TextLabel.positionLabel,
-            items: [{
-                xtype: 'positionPanel',
-                positionStore: self.positionStore
-            }]
-        }, {
-            title: '<i class="glyphicon glyphicon-user"></i> ' + TextLabel.empLabel,
-            items: [{
-                xtype: 'employeePanel',
-                employeeStore: self.employeeStore,
-                departmentStore: self.departmentStore,
-                positionStore: self.positionStore
-            }]
-        }];
+        });
 
         self.callParent();
     }

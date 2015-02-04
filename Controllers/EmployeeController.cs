@@ -15,7 +15,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
     using System.Globalization;
     using System.Web.Security;
 
-    [Authorize(Roles = ConstAppRoles.Admin + "," + ConstAppRoles.Manager)]
+    [Authorize(Roles = ConstAppRoles.Admin + "," + ConstAppRoles.Executive + "," + ConstAppRoles.Manager)]
     public class EmployeeController : PbmController
     {
         string _dupEmpIDValidationMessage = "พบรหัสพนักงานท่านนี้ซ้ำในระบบแล้ว กรุณาระบุใหม่";
@@ -42,6 +42,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 var user = TimesheetService.GetCurrentLoginUser(session);
 
                 var selectUser = from u in session.Query<User>()
+                                 where u.EndDate == null
                                  select u;
 
                 if (Roles.IsUserInRole(ConstAppRoles.Manager))
@@ -49,15 +50,17 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     selectUser = selectUser.Where(x => x.Department == user.Department);
                 }
 
-                viewList = (from u in selectUser
+                count = selectUser.Count();
+
+                var queryObj = (from u in selectUser
                             join au in session.Query<AppUser>() on u equals au.RefUser
                             orderby u.EmployeeID
-                            where u.Department.Division == bu5Div
-                            || u.EmployeeID.ToString().Contains(query)
-                            || u.FirstNameEN.Contains(query)
-                            || u.FirstNameTH.Contains(query)
-                            || u.LastNameEN.Contains(query)
-                            || u.LastNameTH.Contains(query)
+                            where u.Department.Division == bu5Div 
+                            //|| u.EmployeeID.ToString().Contains(query)
+                            //|| u.FirstNameEN.Contains(query)
+                            //|| u.FirstNameTH.Contains(query)
+                            //|| u.LastNameEN.Contains(query)
+                            //|| u.LastNameTH.Contains(query)
                             let startDate = u.StartDate.HasValue ? u.StartDate.Value.ToString(_dateFormat, ViewModelConverter.CultureInfoForDate) : ""
                             let roleName = (from aR in session.Query<AppRole>()
                                             where aR.AppUsers.Contains(au)
@@ -80,7 +83,19 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                                         StartDate = startDate,
                                         AppRole = roleName,
                                         TotalTimesheet = totalTimesheet,
-                                    }).ToList();
+                                    });
+
+                if (!string.IsNullOrEmpty(query))
+                {
+                    queryObj = queryObj.Where(u => 
+                            u.EmployeeID.ToString().Contains(query)
+                            || u.NameTH.Contains(query)
+                            || u.LastTH.Contains(query)
+                            || u.NameEN.Contains(query)
+                            || u.LastEN.Contains(query));
+                }
+
+                viewList = queryObj.ToList();
 
 
             }
@@ -157,6 +172,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
         [Authorize(Roles = ConstAppRoles.Admin)]
         public JsonResult UpdateEmployee(EmployeeView updateModel)
         {
+            bool requireRefresh = false;
             using (var session = _sessionFactory.OpenSession())
             using (var transaction = session.BeginTransaction())
             {
@@ -189,9 +205,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 }
 
                 if (oldEmp.FirstNameTH != updateModel.NameTH
-                                   || oldEmp.LastNameTH != updateModel.LastTH
-                                   || oldEmp.FirstNameEN != updateModel.NameEN
-                                   || oldEmp.LastNameEN != updateModel.LastEN)
+                    || oldEmp.LastNameTH != updateModel.LastTH
+                    || oldEmp.FirstNameEN != updateModel.NameEN
+                    || oldEmp.LastNameEN != updateModel.LastEN)
                 {
                     var validateResult = validateEmployeeFullName(updateModel, session);
                     if (validateResult != null) return validateResult;
@@ -204,6 +220,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     {
                         var validateResult = validateAdminRole(session);
                         if (validateResult != null) return validateResult;
+
+                        requireRefresh = true;
                     }
                 }
                 var dept = (from de in session.Query<Department>()
@@ -241,6 +259,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 return Json(new
                 {
                     success = true,
+                    requireRefresh = requireRefresh,
                     id = updateModel.ID,
                     message = "",
                 }, JsonRequestBehavior.AllowGet);
@@ -342,11 +361,11 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
         }
         private JsonResult validateAdminRole(ISession session)
         {
-            var countAdminQuery = from ar in session.Query<AppRole>()
+            var countAdmin = (from ar in session.Query<AppRole>()
                                    where ar.Name == ConstAppRoles.Admin
-                                   select ar;
+                                   select ar).FirstOrDefault() ;
 
-            if (countAdminQuery.Count() == 1)
+            if (countAdmin.AppUsers.Count < 2)
             {
                 return Json(new
                 {

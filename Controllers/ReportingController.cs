@@ -39,10 +39,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
             //        NameEN = r.NameEN
             //    });
             //});
-            if (Roles.IsUserInRole(ConstAppRoles.Staff) ||
-                Roles.IsUserInRole(ConstAppRoles.Admin) ||
-                Roles.IsUserInRole(ConstAppRoles.Manager))
+            if (Roles.IsUserInRole(ConstAppRoles.Staff))
             {
+                // 1 - ประวัติการทำงานของบุคคล
                 viewList.Add(new ReportTypeView
                 {
                     ID = allReport[0].ID,
@@ -52,8 +51,18 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
             }
 
             if (Roles.IsUserInRole(ConstAppRoles.Admin) ||
+                Roles.IsUserInRole(ConstAppRoles.Executive) ||
                 Roles.IsUserInRole(ConstAppRoles.Manager))
             {
+                // 2 - ต้นทุนการทำงานของบุคคล
+                viewList.Add(new ReportTypeView
+                {
+                    ID = allReport[1].ID,
+                    Name = allReport[1].Name,
+                    NameEN = allReport[1].NameEN
+                });
+
+                // 4 - ต้นทุนการทำงานของแผนก
                 viewList.Add(new ReportTypeView
                 {
                     ID = allReport[3].ID,
@@ -61,6 +70,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     NameEN = allReport[3].NameEN
                 });
 
+                // 5 - ต้นทุนการทำงานของโปรเจกต์
                 viewList.Add(new ReportTypeView
                 {
                     ID = allReport[4].ID,
@@ -72,13 +82,20 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
             if (Roles.IsUserInRole(ConstAppRoles.Admin) ||
                 Roles.IsUserInRole(ConstAppRoles.Executive))
             {
+                // 6 - ต้นทุนการทำงานของโปรเจกต์ทั้งหมด
                 viewList.Add(new ReportTypeView
                 {
                     ID = allReport[5].ID,
                     Name = allReport[5].Name,
                     NameEN = allReport[5].NameEN
                 });
+            }
 
+            if (Roles.IsUserInRole(ConstAppRoles.Admin) ||
+                Roles.IsUserInRole(ConstAppRoles.Manager) || 
+                Roles.IsUserInRole(ConstAppRoles.Executive))
+            {
+                // 7 - สรุปข้อมูลการบันทึกเวลาการทำงาน
                 viewList.Add(new ReportTypeView
                 {
                     ID = allReport[6].ID,
@@ -117,9 +134,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
 
             var reportType = ReportDictionary.GetReportTypeByReportID(exportingRequest.ReportID);
 
-            // สรุปข้อมูลการบันทึกเวลาการทำงาน
             if (exportingRequest.ReportID == 7)
             {
+                #region 7 - สรุปข้อมูลการบันทึกเวลาการทำงาน
                 var timesheetDataRecording = new TimesheetDataRecording(fromDate, toDate)
                 {
                     Title = reportType.Name,
@@ -144,6 +161,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     var allUser = (from u in session.Query<User>()
                                    orderby u.Department.Division.NameTH, u.Department.NameTH, u.FirstNameTH, u.LastNameTH
                                    where !u.Department.NameEN.Contains("__SYSTEM__")
+                                   && u.EndDate == null
                                    select u).ToList();
 
                     if (Roles.IsUserInRole(ConstAppRoles.Manager))
@@ -208,6 +226,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 filename = string.Format(filename, DateTime.Now.ToString("yyyyMMdd"));
                 fullFilepath = fullFilepath + filename;
                 timesheetDataRecording.WriteExcel(fullFilepath);
+                #endregion
 
                 return Json(new
                 {
@@ -215,7 +234,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     success = success,
                     message = message,
                 }, JsonRequestBehavior.AllowGet);
-            }//end  สรุปข้อมูลการบันทึกเวลาการทำงาน
+            }
 
             var listOfProjectHeader = new List<ProjectHeader>();
             var listOfActualCostForProject = new List<ActualCostForProject>();
@@ -254,7 +273,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                         allTimesheet = allTimesheet.Where(t => t.User == me);
                     }
                     else if (Roles.IsUserInRole(ConstAppRoles.Manager) ||
-                        Roles.IsUserInRole(ConstAppRoles.Admin))
+                        Roles.IsUserInRole(ConstAppRoles.Admin) ||
+                        Roles.IsUserInRole(ConstAppRoles.Executive))
                     {
                         var userTarget = (from u in session.Query<User>()
                                           where u.ID == exportingRequest.EmployeeID
@@ -298,7 +318,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 }
                 else if (exportingRequest.ReportID == 6)
                 {
-                    allTimesheet = allTimesheet.Where(t => !t.Project.IsNonProject);
+                    //allTimesheet = allTimesheet.Where(t => !t.Project.IsNonProject);
                 }
 
                 var grpByProject = (from gm in allTimesheet
@@ -314,7 +334,11 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     projectCode = pro.Project.Code;
 
                     // นับจากจำนวนสมาชิก ที่กรอก timesheet
-                    var membersCount = pro.Project.TimeSheets.Select(t => t.User).Distinct().Count();
+                    var membersCount = (from t in session.Query<Timesheet>()
+                                        where t.Project == pro.Project
+                                        select t.User).Distinct().Count();
+
+                    //var membersCount = pro.Project.TimeSheets.Select(t => t.User).Distinct().Count();
 
                     var header1 = new ProjectHeader
                     {
@@ -330,6 +354,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     {
                         var actualCostForProject = new ActualCostForProject
                         {
+                            DisplayOverTime = true,
+                            OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                             FromDate = fromDate,
                             ToDate = toDate,
                             ProjectStartDate = pro.Project.StartDate.ToPresentDateString(),
@@ -367,12 +394,15 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     }
 
                     //fill only memebr timesheet
-                    var timesheet = from t in pro.Timesheets
-                                    where fromDate <= t.ActualStartDate && t.ActualStartDate <= toDate
-                                    select t;
+
+                    var timesheets = (from t in session.Query<Timesheet>()
+                                    where t.Project == pro.Project
+                                    && fromDate <= t.ActualStartDate 
+                                    && t.ActualStartDate <= toDate
+                                    select t).ToList();
 
                     int index = 0;
-                    foreach (var item in timesheet)
+                    foreach (var item in timesheets)
                     {
                         ++index;
                         decimal roleCost = 0;
@@ -409,12 +439,16 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 }
             }
 
+            string newDepartmentName = departmentName.Replace("&", "and");
 
             switch (exportingRequest.ReportID)
             {
                 case 1: // ประวัติการทำงานของบุคคล
                     var actualEffortForPerson = new ActualEffortForPerson
                     {
+                        DisplayOverTime = true,
+                        OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                         FromDate = fromDate,
                         ToDate = toDate,
                         Title = reportType.Name,
@@ -465,6 +499,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 case 2: // ต้นทุนการทำงานของบุคคล
                     var actualCostForPerson = new ActualCostForPerson
                     {
+                        DisplayOverTime = true,
+                        OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                         FromDate = fromDate,
                         ToDate = toDate,
                         Title = reportType.Name,
@@ -519,6 +556,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 case 3: // ประวัติการทำงานของแผนก
                     var report = new ActualCostForDepartment
                     {
+                        DisplayOverTime = true,
+                        OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                         FromDate = fromDate,
                         ToDate = toDate,
                         Title = reportType.Name,
@@ -574,7 +614,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
 
                     //for all
                     filename = "actual_effort_for_department_{0}_{1}.xlsx";
-                    filename = string.Format(filename, departmentName, DateTime.Now.ToString("yyyyMMdd"));
+                    filename = string.Format(filename, newDepartmentName, DateTime.Now.ToString("yyyyMMdd"));
                     fullFilepath = fullFilepath + filename;
                     report.WriteExcel(fullFilepath, false);
 
@@ -582,6 +622,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 case 4: // ต้นทุนการทำงานของแผนก
                     var reportCost = new ActualCostForDepartment
                     {
+                        DisplayOverTime = true,
+                        OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                         FromDate = fromDate,
                         ToDate = toDate,
                         Title = reportType.Name,
@@ -637,7 +680,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
 
                     //for all
                     filename = "actual_cost_for_department_{0}_{1}.xlsx";
-                    filename = string.Format(filename, departmentName, DateTime.Now.ToString("yyyyMMdd"));
+                    filename = string.Format(filename, newDepartmentName, DateTime.Now.ToString("yyyyMMdd"));
                     fullFilepath = fullFilepath + filename;
                     reportCost.WriteExcel(fullFilepath, false);
 
@@ -646,12 +689,16 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
 
                     var actualCostForProjects = new ActualCostForProjects
                     {
+                        DisplayOverTime = true,
+                        OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                         Title = reportType.Name,
                         FromDate = fromDate,
                         ToDate = toDate,
 
                         DateLabel = ReportDictionary.ReportTextTH["DateLabel"],
 
+                        SummaryByPersonTitle = ReportDictionary.ReportTextTH["SummaryByPersonTitle"],
                         SummaryByPhaseTitle = ReportDictionary.ReportTextTH["SummaryByPhaseTitle"],
                         SummaryByTaskTypeTitle = ReportDictionary.ReportTextTH["SummaryByTypeOfPhaseTitle"],
                         SummaryByWeekTitle = ReportDictionary.ReportTextTH["SummaryByWeekTitle"],
@@ -674,6 +721,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 case 6:// ต้นทุนการทำงานของโครงการทั้งหมด
                     var actualCostForAllProject = new ActualCostForAllProject
                     {
+                        DisplayOverTime = true,
+                        OTColumnLabel = ReportDictionary.ReportTextTH["OTColumnLabel"],
+
                         Title = reportType.Name,
                         FromDate = fromDate,
                         ToDate = toDate,

@@ -118,7 +118,7 @@
                         });
                     }
 
-                },
+                }
             });
         };
 
@@ -164,15 +164,16 @@
                         cmbProjectCode.setDisabled(true);
                         cmbProjectCode.reset();
 
+                        // ประวัติการทำงานของบุคคล, ต้นทุนการทำงานของบุคคล
                         if (newValue == 1 || newValue == 2) {
-                            if (LoginToken.roles.indexOf('Admin') >= 0 ||
-                                LoginToken.roles.indexOf('Manager') >= 0) {
+                            if (Roles.isManager || Roles.isAdmin || Roles.isExecutive) {
                                 cmbEmployee.setDisabled(false);
                             }
                         }
 
+                        // ประวัติการทำงานของแผนก, ต้นทุนการทำงานของแผนก
                         if (newValue == 3 || newValue == 4) {
-                            if (LoginToken.roles.indexOf('Admin') >= 0)  {
+                            if (Roles.isAdmin || Roles.isExecutive) {
                                 cmbDepartment.setDisabled(false);
                             }
                         } else if (newValue == 5) {
@@ -186,7 +187,8 @@
                 itemId: 'Employee',
                 name: 'Employee',
                 fieldLabel: 'พนักงาน',
-                store: Ext.create('widget.employeeStore', {autoLoad: true}),
+                //store: Ext.create('widget.employeeStore', {autoLoad: true}),
+                store: Ext.create('widget.employeeStore', { autoLoad: true }),
                 emptyText: TextLabel.requireInputEmptyText,
                 margin: '0 300 0 0',
                 displayField: 'FullName',

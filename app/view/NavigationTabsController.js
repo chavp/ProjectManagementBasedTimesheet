@@ -11,17 +11,13 @@
         var departmentTreeStore = Ext.create('widget.departmentTreeStore');
         var positionStore = Ext.create('widget.positionStore');
         var projectStore = Ext.create('widget.projectStore');
+        var projectTimesheetStore = Ext.create('widget.projectStore');
         var timesheetStore = Ext.create('widget.timesheetStore');
         var customerStore = Ext.create('widget.customerStore');
 
         var phaseStore = Ext.create('widget.phaseStore');
         var taskTypeStore = Ext.create('widget.taskTypeStore');
         var mainTaskStore = Ext.create('widget.mainTaskStore');
-
-        projectStore.load();
-        phaseStore.load();
-        taskTypeStore.load();
-        mainTaskStore.load();
 
         var tabPanel = self.lookupReference('navigation');
 
@@ -42,12 +38,44 @@
 
         activeTab = homeTab;
 
-        if (LoginToken.roles.indexOf('Admin') >= 0) {
+        // preload dataStore
+        projectStore.load();
+        phaseStore.load();
+        taskTypeStore.load();
+        mainTaskStore.load();
+
+        if (Roles.isAdmin || Roles.isExecutive) {
             employeeStore.load();
+            customerStore.load();
             departmentStore.load();
             positionStore.load();
-            customerStore.load();
 
+            //console.log(Roles.isExecutive);
+        }
+
+        if (Roles.isManager) {
+            employeeStore.load();
+            customerStore.load();
+        }
+
+        // panel projectManagementPanel
+        var projectManagementPanel = {
+            title: '<i class="glyphicon glyphicon-th-large"></i> ' + TextLabel.projectManagementLabel,
+            items: [{
+                xtype: 'projectManagementPanel',
+                projectStore: projectStore,
+                projectTimesheetStore: projectTimesheetStore,
+
+                customerStore: customerStore,
+
+                phaseStore: phaseStore,
+                taskTypeStore: taskTypeStore,
+                mainTaskStore: mainTaskStore
+            }]
+        };
+
+        // preenable feature
+        if (Roles.isAdmin) {
             var organizationTab = tabPanel.add({
                 title: '<i class="glyphicon glyphicon-tower"></i> ' + TextLabel.orgLabel,
                 items: [{
@@ -66,63 +94,21 @@
                 }]
             });
 
-            var projectManagementTab = tabPanel.add({
-                title: '<i class="glyphicon glyphicon-th-large"></i> ' + TextLabel.projectManagementLabel,
-                items: [{
-                    xtype: 'projectManagementPanel',
-                    projectStore: projectStore,
-                    customerStore: customerStore,
-
-                    phaseStore: phaseStore,
-                    taskTypeStore: taskTypeStore,
-                    mainTaskStore: mainTaskStore
-                }]
-            });
-
-            //var projectTab = tabPanel.add({
-            //    title: '<i class="glyphicon glyphicon-gift"></i> ' + TextLabel.projectLabel,
-            //    items: [{
-            //        xtype: 'projectPanel',
-            //        projectStore: projectStore,
-            //        customerStore: customerStore
-            //    }]
-            //});
+            var projectManagementTab = tabPanel.add(projectManagementPanel);
 
             //activeTab = projectManagementTab;
         }
 
-        if (LoginToken.roles.indexOf('Manager') >= 0) {
-            employeeStore.load();
-            customerStore.load();
-
-            var customerTab = tabPanel.add({
-                title: '<i class="glyphicon glyphicon-heart"></i> ' + TextLabel.customerRelationshipLabel,
-                items: [{
-                    xtype: 'customerRelationshipPanel',
-                    customerStore: customerStore
-                }]
-            });
-
-            var projectManagementTab = tabPanel.add({
-                title: '<i class="glyphicon glyphicon-th-large"></i> ' + TextLabel.projectManagementLabel,
-                items: [{
-                    xtype: 'projectManagementPanel',
-                    projectStore: projectStore,
-                    customerStore: customerStore,
-
-                    phaseStore: phaseStore,
-                    taskTypeStore: taskTypeStore,
-                    mainTaskStore: mainTaskStore
-                }]
-            });
+        if (Roles.isManager) {
+            var projectManagementTab = tabPanel.add(projectManagementPanel);
         }
 
-        if (LoginToken.roles.indexOf('Executive') < 0) {
+        if (!Roles.isExecutive) {
             var timesheetTab = tabPanel.add({
                 title: '<i class="glyphicon glyphicon-time"></i> ' + TextLabel.timesheetLabel,
                 items: [{
                     xtype: 'timesheetPanel',
-                    projectStore: Ext.create('widget.projectStore'),
+                    projectStore: projectTimesheetStore,
                     timesheetStore: Ext.create('widget.timesheetStore'),
                     phaseStore: phaseStore,
                     taskTypeStore: taskTypeStore,
@@ -147,7 +133,7 @@
             }]
         });
 
-        tabPanel.setActiveTab(activeTab);
+        //tabPanel.setActiveTab(activeTab);
 
         Ext.suspendLayouts();
         Ext.resumeLayouts(true);

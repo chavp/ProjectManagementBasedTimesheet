@@ -8,6 +8,9 @@
 
     initComponent: function () {
         var self = this;
+        var ver = '(v.1.1.1)';
+        var currentYear = new Date().getFullYear();
+        var companyName = '© 2014 - ' + currentYear + ' PABOONMA CREATIVE SOLUTIONS CO.,LTD. '  + ver;
         var headerHtml = '<img src="' + document.logoFilePath + '" />';
 
         //console.log(LoginToken.isAuthenticated);
@@ -24,7 +27,6 @@
                     xtype: 'panel',
                     layout: 'border',
                     height: 80,
-
                     items: [{
                         region: 'west',
                         width: 285,
@@ -52,7 +54,7 @@
                 }, {
                     region: 'south',
                     title: '',
-                    html: '<div class="container corp-footer-name">© 2014 PABOONMA CREATIVE SOLUTIONS CO.,LTD.</div>'
+                    html: '<div class="container corp-footer-name">' + companyName + '</div>'
                 }]
             };
         } else {
@@ -78,7 +80,7 @@
                             else if (loginModel.Password === "") {
                                 Ext.getCmp('login-password').focus(false, 200);
                             }
-                            
+
                         }
                     });
 
@@ -92,61 +94,20 @@
                         window.location.href = document.urlAppRoot;
                     },
                     failure: function (form, action) {
+                        from.setLoading(false);
+                        var respose = Ext.decode(action.response.responseText);
+
                         Ext.MessageBox.show({
                             title: TextLabel.errorAlertTitle,
-                            msg: 'การเข้าระบบล้มเหลว ' + action.respose.message,
+                            msg: 'การเข้าระบบล้มเหลว ' + respose.message,
                             //width: 300,
                             buttons: Ext.MessageBox.OK,
                             //animateTarget: from,
                             icon: Ext.MessageBox.ERROR
                         });
                     }
-                    //,
-                    //failure: function (form, action) {
-                    //    from.setLoading(false);
-                    //    var respose = action.result;
-                    //    Ext.MessageBox.show({
-                    //        title: TextLabel.errorAlertTitle,
-                    //        msg: "เกิดข้อผิดพลาดในการเข้าระบบ " + respose.message,
-                    //        //width: 300,
-                    //        buttons: Ext.MessageBox.OK,
-                    //        //animateTarget: from,
-                    //        icon: Ext.MessageBox.ERROR
-                    //    });
-                    //}
                 });
-                //Ext.Ajax.request({
-                //    url: document.urlAppApi + '/Login',
-                //    success: function (transport) {
-                //        from.setLoading(false);
-                //        var respose = Ext.decode(transport.responseText);
-                //        if (respose.success) {
-                //            window.location.href = document.urlAppRoot;
-                //        } else {
-                //            Ext.MessageBox.show({
-                //                title: TextLabel.errorAlertTitle,
-                //                msg: 'การเข้าระบบล้มเหลว ' + respose.message,
-                //                //width: 300,
-                //                buttons: Ext.MessageBox.OK,
-                //                //animateTarget: from,
-                //                icon: Ext.MessageBox.ERROR
-                //            });
-                //        }
-                //    },
-                //    failure: function (transport) {
-                //        from.setLoading(false);
-                //        Ext.MessageBox.show({
-                //            title: TextLabel.errorAlertTitle,
-                //            msg: "เกิดข้อผิดพลาดในการเข้าระบบ " + transport.responseText,
-                //            //width: 300,
-                //            buttons: Ext.MessageBox.OK,
-                //            //animateTarget: from,
-                //            icon: Ext.MessageBox.ERROR
-                //        });
-                //    },
-                //    jsonData: loginModel
-                //});
-            }
+            };
 
             self.items = {
                 xtype: 'panel',
@@ -174,9 +135,6 @@
                     region: 'center',
                     xtype: 'panel',
                     layout: {
-                                type: 'vbox',
-                                align: 'center'
-                    }, layout: {
                         type: 'vbox',
                         align: 'center'
                     },
@@ -229,7 +187,7 @@
                         buttonAlign: 'center',
                         buttons: [{
                             text: '<i class="glyphicon glyphicon-log-out"></i>&nbsp;เข้าระบบ',
-                            width: '100%',
+                            width: 300,
                             handler: function (widget, event) {
                                 doLogin(widget, event);
                             }
@@ -238,7 +196,7 @@
                 }, {
                     region: 'south',
                     title: '',
-                    html: '<div class="container corp-footer-name">© 2014 PABOONMA CREATIVE SOLUTIONS CO.,LTD.</div>'
+                    html: '<div class="container corp-footer-name">' + companyName + '</div>'
                 }]
             };
         }
@@ -285,6 +243,24 @@
                 //console.log(Ext.util.Cookies.get('aut-bpm-timesheet'));
 
                 Ext.getCmp('login-username').focus(false, 200);
+            }
+
+            var token = Ext.History.getToken();
+            if (token) {
+                parts = token.split(':');
+                length = parts.length;
+
+                // setActiveTab in all nested tabs
+                for (i = 0; i < length - 1; i++) {
+                    Ext.getCmp(parts[i]).setActiveTab(Ext.getCmp(parts[i + 1]));
+                }
+            } else {
+                var mainTabs = Ext.getCmp('main-tabs');
+                if (mainTabs) {
+                    if (mainTabs.setActiveTab) {
+                        Ext.getCmp('main-tabs').setActiveTab(0);
+                    }
+                }
             }
         }
     }

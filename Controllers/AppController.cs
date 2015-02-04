@@ -84,6 +84,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
             var oldPasswordNotValid = "กรุณาระบุรหัสเข้าระบบเดิมให้ถูกต้อง";
             var strong8PasswordNotValid = "กรุณาระบุรหัสเข้าระบบใหม่ตั้งแต่ 8 ตัวอักษรขึ้นไป";
             var newPasswordNotValid = "กรุณาระบุรหัสเข้าระบบใหม่ไม่ให้ตรงกับรหัสพนักงาน";
+            var sameDefaultPasswordNotValid = "ห้ามเปลี่ยนเป็นรหัสเข้าระบบตั่งต้น";
 
             var success = false;
             var msg = string.Empty;
@@ -97,6 +98,10 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
             {
                 // http://windows.microsoft.com/en-us/windows-vista/tips-for-creating-a-strong-password
                 msg = strong8PasswordNotValid;
+            }
+            else if (newPassword == ConstAppRoles.DefaultPassword)
+            {
+                msg = sameDefaultPasswordNotValid;
             }
             else
             {

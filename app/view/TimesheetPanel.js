@@ -177,11 +177,8 @@
                 height: AppConfig.height - 360,
                 columns: {
                     items: [
+                        Ext.create('Ext.grid.RowNumberer', { locked: true }),
                         {
-                            xtype: 'rownumberer',
-                            width: 30,
-                            locked: true
-                        }, {
                             xtype: 'actioncolumn',
                             width: 60,
                             items: [{
@@ -302,7 +299,7 @@
                 bbar: Ext.create('Ext.PagingToolbar', {
                     displayInfo: true,
                     store: self.timesheetStore,
-                    displayMsg: TextLabel.timesheetLabel + ' ที่กำลังแสดงอยู่ {0} - {1} of {2}',
+                    displayMsg: TextLabel.timesheetLabel + ' ที่กำลังแสดงอยู่ {0} - {1} จาก {2}',
                     emptyMsg: "ไม่มี " + TextLabel.timesheetLabel
                 })
             }]

@@ -46,20 +46,21 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
             using (var session = _sessionFactory.OpenSession())
             {
                 var prjList = (from prj in session.Query<Project>()
-                               orderby prj.StartDate descending
+                               orderby prj.Code
+                               let totalTimesheet = (from t in session.Query<Timesheet>() where t.Project == prj select t).Count()
                                where prj.Code.Contains(projectCode)
                                && prj.NameTH.Contains(projectName)
                                && prj.NameEN.Contains(projectName)
-                                   select prj);
+                               select new { Prj = prj, TotalTimesheet = totalTimesheet });
 
                 if (isTimesheet)
                 {
-                    prjList = prjList.Where(p => p.Status.ID == 1);
+                    prjList = prjList.Where(p => p.Prj.Status.ID == 1);
                 }
 
-                bool isStaff = Roles.IsUserInRole(ConstAppRoles.Staff);
-                prjList.ForEach(prj =>
+                prjList.ForEach(item =>
                 {
+                    var prj = item.Prj;
                     long? customerID = null;
                     if (prj.Customer != null)
                     {
@@ -78,10 +79,16 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                         IsNonProject = prj.IsNonProject,
                     };
 
-                    if (!isStaff)
+                    if (Roles.IsUserInRole(ConstAppRoles.Admin)
+                        || Roles.IsUserInRole(ConstAppRoles.Executive))
                     {
                         newView.EstimateProjectValue = prj.EstimateProjectValue;
-                        newView.TotalTimesheet = prj.TimeSheets.Count();
+                        newView.TotalTimesheet = item.TotalTimesheet;
+                    }
+
+                    if (Roles.IsUserInRole(ConstAppRoles.Admin))
+                    {
+                        newView.TotalTimesheet = item.TotalTimesheet;
                     }
 
                     if (prj.Status != null)

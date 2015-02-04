@@ -1,16 +1,33 @@
-﻿TextLabel = (function () {
+﻿Dictionary = (function () {
+    return {
+        Project: 'โปรเจกต์',
+        Employee: 'พนักงาน'
+    }
+})();
+
+Roles = (function () {
+    return {
+        isManager: (LoginToken.roles.indexOf('Manager') >= 0),
+
+        isAdmin: (LoginToken.roles.indexOf('Admin') >= 0),
+
+        isExecutive: (LoginToken.roles.indexOf('Executive') >= 0)
+    }
+})();
+
+TextLabel = (function () {
     return {
         codeLabel: 'รหัส',
         nameLabel: 'ชื่อ',
         criterionLabel: 'เงื่อนไขค้นหา',
-        projectLabel: 'โปรเจกต์',
+        projectLabel: Dictionary.Project,
         projectManagementLabel: 'การจัดการโปรเจกต์',
         projectCodeLabel: 'รหัสโปรเจกต์',
         projectNameLabel: 'ชื่อโปรเจกต์',
         projectActivitiesLabel: 'กิจกรรม',
 
-        projectStartLabel: 'วันที่เริ่มโปรเจกต์',
-        projectEndLabel: 'วันที่ปิดโปรเจกต์',
+        projectStartLabel: 'วันที่เริ่มตามสัญญา',
+        projectEndLabel: 'วันที่สิ้นสุดตามสัญญา',
         projectMemberLabel: 'สมาชิกในโปรเจกต์',
         projectStatusLabel: 'สถานะโปรเจกต์',
         projectPhaseLabel: 'ช่วงโปรเจกต์',
@@ -41,6 +58,7 @@
 
         projectAddCmdLabel: 'เพิ่มโปรเจกต์',
 
+        displayCmdLabel: 'แสดงข้อมูล',
         addCmdLabel: 'เพิ่มข้อมูล',
         deleteCmdLabel: 'ลบข้อมูล',
 
@@ -113,9 +131,15 @@
 CommandActionBuilder = (function () {
     return {
         cancleAction: function (from) {
+            var text = TextLabel.cancleActionText;
+            if (from.getReadOnly) {
+                if (from.getReadOnly()) {
+                    text = TextLabel.closeActionText;
+                }
+            }
             return Ext.create('Ext.Action', {
                 //iconCls: 'add-button',
-                text: TextLabel.cancleActionText,
+                text: text,
                 disabled: false,
                 handler: function (widget, event) {
                     from.close();
@@ -147,34 +171,36 @@ Ext.application({
         'Ext.tab.Panel',
         'Ext.util.Cookies',
         'Ext.ux.form.SearchField',
+        'Ext.util.History',
 
         document.appName + '.view.NavigationTabs',
         document.appName + '.view.NavigationTabsController',
 
         document.appName + '.view.TimesheetPanel',
         document.appName + '.view.TimesheetWindow',
-        document.appName + '.view.ProjectManagementPanel',
-        document.appName + '.view.ProjectPanel',
+
+        document.appName + '.view.project.MainTaskWindow',
+        document.appName + '.view.project.PhaseWindow',
+        document.appName + '.view.project.ProjectActivitiesPanel',
+        document.appName + '.view.project.ProjectManagementPanel',
+        document.appName + '.view.project.ProjectPanel',
+        document.appName + '.view.project.ProjectWindow',
+        document.appName + '.view.project.TaskTypeWindow',
+
         document.appName + '.view.ReportPanel',
 
-        document.appName + '.view.EmployeePanel',
-        document.appName + '.view.EmployeeWindow',
-        document.appName + '.view.DepartmentWindow',
         document.appName + '.view.OrganizationPanel',
-        document.appName + '.view.DepartmentPanel',
-        document.appName + '.view.PositionPanel',
-        document.appName + '.view.PositionWindow',
-        document.appName + '.view.ProjectWindow',
-        document.appName + '.view.ProjectActivitiesPanel',
+        document.appName + '.view.employee.EmployeePanel',
+        document.appName + '.view.employee.EmployeeWindow',
+        document.appName + '.view.department.DepartmentPanel',
+        document.appName + '.view.department.DepartmentWindow',
+        document.appName + '.view.position.PositionPanel',
+        document.appName + '.view.position.PositionWindow',
 
         document.appName + '.view.UserChangePasswordWindow',
 
-        document.appName + '.view.CustomerRelationshipPanel',
-        document.appName + '.view.CustomerWindow',
-
-        document.appName + '.view.PhaseWindow',
-        document.appName + '.view.TaskTypeWindow',
-        document.appName + '.view.MainTaskWindow'
+        document.appName + '.view.customer.CustomerRelationshipPanel',
+        document.appName + '.view.customer.CustomerWindow'
     ],
 
     models: [
@@ -209,9 +235,68 @@ Ext.application({
     controllers: ['Main'],
 
     init: function () {
-
+        // Best of Extjs http://www.sencha.com/blog/top-10-ext-js-development-practices-to-avoid
         Ext.tip.QuickTipManager.init();
         Ext.state.Manager.setProvider(Ext.create('Ext.state.CookieProvider'));
         //Ext.Msg.alert('Fiddle', 'Welcome to Sencha Fiddle!');
+
+        Ext.History.init();
+
+        var tokenDelimiter = ':';
+        CommandActionBuilder.onTabChange = function (tabPanel, tab) {
+            if (tab) {
+                var tabs = [],
+                    ownerCt = tabPanel.ownerCt,
+                    oldToken, newToken;
+
+                tabs.push(tab.id);
+                tabs.push(tabPanel.id);
+
+                while (ownerCt && ownerCt.is('tabpanel')) {
+                    tabs.push(ownerCt.id);
+                    ownerCt = ownerCt.ownerCt;
+                }
+
+                newToken = tabs.reverse().join(tokenDelimiter);
+
+                oldToken = Ext.History.getToken();
+
+                if (oldToken === null || oldToken.search(newToken) === -1) {
+                    Ext.History.add(newToken);
+                }
+            }
+        }
+
+        // Handle this change event in order to restore the UI to the appropriate history state
+        CommandActionBuilder.onAfterRender =  function(){
+            Ext.History.on('change', function (token) {
+                var parts, length, i;
+                //console.log(token);
+                if (token) {
+                    parts = token.split(tokenDelimiter);
+                    length = parts.length;
+
+                    //console.log(token);
+
+                    // setActiveTab in all nested tabs
+                    for (i = 0; i < length - 1; i++) {
+                        Ext.getCmp(parts[i]).setActiveTab(Ext.getCmp(parts[i + 1]));
+                    }
+                }
+            });
+
+            // This is the initial default state.  Necessary if you navigate starting from the
+            // page without any existing history token params and go back to the start state.
+            
+            //var activeTab1 = Ext.getCmp('main-tabs'), activeTab2;
+            //if (activeTab1.getActiveTab() == null) {
+            //    activeTab1.setActiveTab(0);
+            //}
+            ////console.log(activeTab1);
+            //if (activeTab1.getActiveTab) {
+            //    activeTab2 = activeTab1.getActiveTab();
+            //}
+            //CommandActionBuilder.onTabChange(activeTab1, activeTab2);
+        }
     }
 });
