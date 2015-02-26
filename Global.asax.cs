@@ -17,6 +17,7 @@ namespace PJ_CWN019.TM.PBM.Web
     using NHibernate.Linq;
     using NHibernate.Tool.hbm2ddl;
     using PJ_CWN019.TM.PBM.Web.Models;
+    using PJ_CWN019.TM.PBM.Web.Properties;
     using System.Globalization;
     using System.IO;
     using Nh = NHibernate.Cfg;
@@ -95,11 +96,7 @@ namespace PJ_CWN019.TM.PBM.Web
                               select div).FirstOrDefault();
                 if (systemDiv == null)
                 {
-                    systemDiv = new Division
-                    {
-                        NameTH = "__SYSTEM__",
-                        NameEN = "__SYSTEM__",
-                    };
+                    systemDiv = new Division("__SYSTEM__");
                     session.Save(systemDiv);
                 }
                 var systemDepartment = (from dept in session.Query<Department>()
@@ -107,11 +104,7 @@ namespace PJ_CWN019.TM.PBM.Web
                                         select dept).FirstOrDefault();
                 if (systemDepartment == null)
                 {
-                    systemDepartment = new Department
-                    {
-                        NameTH = "__SYSTEM__",
-                        NameEN = "__SYSTEM__",
-                    };
+                    systemDepartment = new Department("__SYSTEM__");
                     session.Save(systemDepartment);
                 }
                 systemDiv.Departments.Add(systemDepartment);
@@ -121,13 +114,7 @@ namespace PJ_CWN019.TM.PBM.Web
                                         select p).FirstOrDefault();
                 if (rootPosition == null)
                 {
-                    rootPosition = new Position
-                    {
-                        NameEN = "__ROOT__",
-                        NameTH = "__ROOT__",
-                        NameAbbrEN = "__ROOT__",
-                        NameAbbrTH = "__ROOT__",
-                    };
+                    rootPosition = new Position("__ROOT__", 0);
                     //systemDepartment.Positions.Add(rootPosition);
                     session.Save(rootPosition);
                 }
@@ -137,12 +124,9 @@ namespace PJ_CWN019.TM.PBM.Web
                                select p).FirstOrDefault();
                 if (rootRole == null)
                 {
-                    rootRole = new ProjectRole
+                    rootRole = new ProjectRole(rootPosition.NameTH, 99998)
                     {
-                        NameTH = rootPosition.NameTH,
-                        NameEN = rootPosition.NameEN,
-                        IsNonRole = false,
-                        Order = 99998
+                        IsNonRole = false
                     };
                     session.Save(rootRole);
                 }
@@ -189,11 +173,7 @@ namespace PJ_CWN019.TM.PBM.Web
 
                 if (bu5Div == null)
                 {
-                    bu5Div = new Division
-                    {
-                        NameTH = "BU5",
-                        NameEN = "BU5",
-                    };
+                    bu5Div = new Division("BU5");
                     session.Save(bu5Div);
                 }
 
@@ -205,7 +185,7 @@ namespace PJ_CWN019.TM.PBM.Web
                 {
                     pbmOrg = new Organization
                     {
-                        Name = "xxxxxxxxxxxxx",
+                        Name = "พาบุญมา",
                         ShortName = "PBM",
                     };
 
@@ -246,12 +226,9 @@ namespace PJ_CWN019.TM.PBM.Web
                                 select p).FirstOrDefault();
                 if (nonRole == null)
                 {
-                    nonRole = new ProjectRole
+                    nonRole = new ProjectRole("Non-Role", 99999)
                     {
-                        NameTH = "Non-Role",
-                        NameEN = "Non-Role",
-                        IsNonRole = true,
-                        Order = 99999
+                        IsNonRole = true
                     };
                     session.Save(nonRole);
                 }
@@ -274,13 +251,13 @@ namespace PJ_CWN019.TM.PBM.Web
                 }
 
                 // create Phase
-                //initDefaultPhase(session);
+                initDefaultPhase(session);
 
                 // create Task Types
-                //initDefaultTaskTypes(session);
+                initDefaultTaskTypes(session);
 
                 // create Main Tasks
-                //initDefaultMainTasks(session);
+                initDefaultMainTasks(session);
 
                 tran.Commit();
             }
@@ -288,137 +265,89 @@ namespace PJ_CWN019.TM.PBM.Web
 
         private void initDefaultPhase(ISession session)
         {
-            var initPhases = new List<Phase>
+            var count = (from x in session.Query<Phase>() select x).Count();
+            if (count == 0)
             {
-                new Phase{
-                    Order = 1,
-                    NameTH = "Sale / Presale / Demo",
-                    NameEN = "Sale / Presale / Demo"
-                },
-
-                new Phase{
-                    Order = 2,
-                    NameTH = "Design / Creative / Pre-Prodution",
-                    NameEN = "Design / Creative / Pre-Prodution"
-                },
-
-                new Phase{
-                    Order = 3,
-                    NameTH = "Production / Post-Production / Develop",
-                    NameEN = "Production / Post-Production / Develop"
-                },
-
-                new Phase{
-                    Order = 4,
-                    NameTH = "Maintenance",
-                    NameEN = "Maintenance"
-                },
-
-                new Phase{
-                    Order = 9999,
-                    NameTH = "Non-Phase",
-                    NameEN = "Non-Phase"
-                },
-            };
-            foreach (var item in initPhases)
-            {
-                var query = from x in session.Query<Phase>()
-                            where x.NameTH == item.NameTH
-                            select x;
-                if (query.Count() == 0)
+                var initPhases = new List<Phase>
                 {
-                    session.Save(item);
+                    new Phase("Sale / Presale / Demo", 1),
+
+                    new Phase("Design / Creative / Pre-Prodution", 2),
+
+                    new Phase("Production / Post-Production / Develop", 3),
+
+                    new Phase("Maintenance", 4),
+
+                    new Phase("Non-Phase", 5),
+                };
+                foreach (var item in initPhases)
+                {
+                    var query = from x in session.Query<Phase>()
+                                where x.NameTH == item.NameTH
+                                select x;
+                    if (query.Count() == 0)
+                    {
+                        session.Save(item);
+                    }
                 }
             }
         }
         private void initDefaultTaskTypes(ISession session)
         {
-            var initTaskTypes = new List<TaskType>
+            var count = (from x in session.Query<TaskType>() select x).Count();
+            if (count == 0)
             {
-                new TaskType{
-                    Order = 1,
-                    NameTH = "New",
-                    NameEN = "New"
-                },
+                var initTaskTypes = new List<TaskType>
+            {
+                new TaskType("New", 1),
             };
-            foreach (var item in initTaskTypes)
-            {
-                var query = from x in session.Query<TaskType>()
-                            where x.NameTH == item.NameTH
-                            select x;
-                if (query.Count() == 0)
+                foreach (var item in initTaskTypes)
                 {
-                    session.Save(item);
+                    var query = from x in session.Query<TaskType>()
+                                where x.NameTH == item.NameTH
+                                select x;
+                    if (query.Count() == 0)
+                    {
+                        session.Save(item);
+                    }
                 }
             }
         }
         private void initDefaultMainTasks(ISession session)
         {
-            var initMainTasks = new List<MainTask>
+            var count = (from x in session.Query<MainTask>() select x).Count();
+            if (count == 0)
             {
-                new MainTask{
-                    Desc = "Testing",
-                },
-                new MainTask{
-                    Desc = "ส่งมอบ",
-                },
-                new MainTask{
-                    Desc = "Meeting",
-                },
-                new MainTask{
-                    Desc = "Storyboard / Script",
-                },
-                new MainTask{
-                    Desc = "Get Brief",
-                },
-                new MainTask{
-                    Desc = "Research",
-                },
-                new MainTask{
-                    Desc = "Graphic / Motion",
-                },
-                new MainTask{
-                    Desc = "Shooting",
-                },
-                new MainTask{
-                    Desc = "Contact",
-                },
-                new MainTask{
-                    Desc = "Present",
-                },
-                new MainTask{
-                    Desc = "จัดซื้อ",
-                },
-                new MainTask{
-                    Desc = "Media",
-                },
-                new MainTask{
-                    Desc = "Programing",
-                },
-                new MainTask{
-                    Desc = "Document",
-                },
-                new MainTask{
-                    Desc = "System Analysis",
-                },
-                new MainTask{
-                    Desc = "Event",
-                },
-                new MainTask{
-                    Desc = "Installation",
-                },
-                new MainTask{
-                    Desc = "อื่นๆ",
-                },
+                var initMainTasks = new List<MainTask>
+            {
+                new MainTask("Testing"),
+                new MainTask("ส่งมอบ"),
+                new MainTask("Meeting"),
+                new MainTask("Storyboard / Script"),
+                new MainTask("Get Brief"),
+                new MainTask("Research"),
+                new MainTask("Graphic / Motion"),
+                new MainTask("Shooting"),
+                new MainTask("Contact"),
+                new MainTask("Present"),
+                new MainTask("จัดซื้อ"),
+                new MainTask("Media"),
+                new MainTask("Programing"),
+                new MainTask("Document"),
+                new MainTask("System Analysis"),
+                new MainTask("Event"),
+                new MainTask("Installation"),
+                new MainTask("อื่นๆ"),
             };
-            foreach (var item in initMainTasks)
-            {
-                var query = from x in session.Query<MainTask>()
-                            where x.Desc == item.Desc
-                            select x;
-                if (query.Count() == 0)
+                foreach (var item in initMainTasks)
                 {
-                    session.Save(item);
+                    var query = from x in session.Query<MainTask>()
+                                where x.Desc == item.Desc
+                                select x;
+                    if (query.Count() == 0)
+                    {
+                        session.Save(item);
+                    }
                 }
             }
         }
@@ -428,10 +357,10 @@ namespace PJ_CWN019.TM.PBM.Web
             return Fluently.Configure()
                 .Database(MsSqlConfiguration.MsSql2012
                 .ConnectionString(c => c
-                .Server("xxx.xxx.xxx.xxx")
-                .Username("xxxx")
-                .Password("xxxx")
-                .Database("XXXX")))
+                .Server(Settings.Default.DBServer)
+                .Username(Settings.Default.DBUserName)
+                .Password(Settings.Default.DBPassword)
+                .Database(Settings.Default.DB)))
                 .Mappings(m => m.FluentMappings.AddFromAssemblyOf<UserMap>())
                 .ExposeConfiguration(TreatConfiguration)
                 .BuildSessionFactory();

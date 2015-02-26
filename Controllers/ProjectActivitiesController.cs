@@ -30,12 +30,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 var validateResult = validatePhaseName(model, session);
                 if (validateResult != null) return validateResult;
 
-                var newModel = new Phase
-                {
-                    NameTH = model.Name,
-                    NameEN = model.Name,
-                    Order = model.Order,
-                };
+                var newModel = new Phase(model.Name, model.Order);
 
                 session.Save(newModel);
                 transaction.Commit();
@@ -105,12 +100,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 var validateResult = validateTaskTypeName(model, session);
                 if (validateResult != null) return validateResult;
 
-                var newModel = new TaskType
-                {
-                    NameTH = model.Name,
-                    NameEN = model.Name,
-                    Order = model.Order,
-                };
+                var newModel = new TaskType(model.Name, model.Order);
 
                 session.Save(newModel);
                 transaction.Commit();
@@ -180,10 +170,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 var validateResult = validateMainTaskName(model, session);
                 if (validateResult != null) return validateResult;
 
-                var newModel = new MainTask
-                {
-                    Desc = model.Name,
-                };
+                var newModel = new MainTask(model.Name);
 
                 session.Save(newModel);
                 transaction.Commit();

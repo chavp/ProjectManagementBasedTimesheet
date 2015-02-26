@@ -217,12 +217,7 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                               where div.NameTH == "BU5"
                               select div).Single();
 
-                department = new Department
-                {
-                    NameTH = updateModel.NameTH,
-                    NameEN = updateModel.NameTH,
-                };
-
+                department = new Department(updateModel.NameTH);
 
                 bu5Div.Departments.Add(department);
                 session.Save(department);
@@ -424,20 +419,9 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                     }, JsonRequestBehavior.AllowGet);
                 }
 
-                var newPosition = new Position
-                {
-                    NameTH = model.PositionName,
-                    NameEN = model.PositionName,
-                    NameAbbrEN = model.PositionName,
-                    NameAbbrTH = model.PositionName,
-                };
+                var newPosition = new Position(model.PositionName, 0);
 
-                var prjRole = new ProjectRole
-                {
-                    NameTH = model.PositionName,
-                    NameEN = model.PositionName,
-                    Order = model.Order
-                };
+                var prjRole = new ProjectRole(model.PositionName, model.Order);
                 var prjRate = new ProjectRoleRate
                 {
                     Cost = model.ProjectRoleRateCost,

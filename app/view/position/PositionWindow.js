@@ -107,7 +107,7 @@
                 itemId: 'ProjectRoleRateCost',
                 name: 'ProjectRoleRateCost',
                 allowBlank: true,
-                maxLength: 13,
+                maxLength: 9,
                 forcePrecision: true,
                 decimalPrecision: 0,
                 useThousandSeparator: true,

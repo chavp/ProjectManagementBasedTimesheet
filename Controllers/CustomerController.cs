@@ -57,9 +57,8 @@ namespace PJ_CWN019.TM.PBM.Web.Controllers
                 var validateResult = validateCustomerName(model, session);
                 if (validateResult != null) return validateResult;
 
-                var newCus = new Customer
+                var newCus = new Customer(model.Name)
                 {
-                    Name = model.Name,
                     ContactChannel = model.ContactChannel
                 };
 
